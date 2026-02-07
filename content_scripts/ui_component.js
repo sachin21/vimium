@@ -29,7 +29,6 @@ class UIComponent {
   async load(iframeUrl, className, messageHandler) {
     if (this.iframeFrameElement) throw new Error("init should only be called once.");
     this.messageHandler = messageHandler;
-    const isDomTests = iframeUrl.includes("?dom_tests=true");
     this.iframeElement = DomUtils.createElement("iframe");
 
     // Allow Vimium's iframes to have clipboard access in Chrome. This is needed when triggering
@@ -82,7 +81,7 @@ class UIComponent {
       // Get vimiumSecret so the iframe can determine that our message isn't the page
       // impersonating us.
       // Outside of tests, target origin starts with chrome-extension://{vimium's-id}
-      const targetOrigin = isDomTests ? "*" : chrome.runtime.getURL("");
+      const targetOrigin = chrome.runtime.getURL("");
       this.iframeElement.contentWindow.postMessage(secret, targetOrigin, [port2]);
       port1.onmessage = (event) => {
         let eventName = null;
