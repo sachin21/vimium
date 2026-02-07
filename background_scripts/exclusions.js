@@ -1,6 +1,13 @@
 // This module manages manages the exclusion rule setting. An exclusion is an object with two
 // attributes: pattern and passKeys. The exclusion rules are an array of such objects.
 
+// Convert a glob-like pattern to a RegExp, escaping regex special characters except *.
+// This prevents ReDoS attacks from user-supplied patterns.
+export function patternToRegExp(pattern) {
+  const escaped = pattern.replace(/[\\^$+?.()|[\]{}]/g, "\\$&").replace(/\*/g, ".*");
+  return new RegExp("^" + escaped + "$");
+}
+
 const ExclusionRegexpCache = {
   cache: {},
   clear(cache) {
@@ -13,7 +20,7 @@ const ExclusionRegexpCache = {
       let result;
       // We use try/catch to ensure that a broken regexp doesn't wholly cripple Vimium.
       try {
-        result = new RegExp("^" + pattern.replace(/\*/g, ".*") + "$");
+        result = patternToRegExp(pattern);
       } catch {
         if (!globalThis.isUnitTests) {
           console.log(`bad regexp in exclusion rule: ${pattern}`);

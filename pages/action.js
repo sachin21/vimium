@@ -3,6 +3,7 @@ import "../lib/dom_utils.js";
 import "../lib/settings.js";
 
 import * as bgUtils from "../background_scripts/bg_utils.js";
+import { patternToRegExp } from "../background_scripts/exclusions.js";
 import { ExclusionRulesEditor } from "./exclusion_rules_editor.js";
 
 const ActionPage = {
@@ -138,7 +139,7 @@ const ActionPage = {
   },
 
   getPatternRegExp(patternStr) {
-    return new RegExp("^" + patternStr.replace(/\*/g, ".*") + "$");
+    return patternToRegExp(patternStr);
   },
 
   // Returns an exclusion pattern which matches the domain of the given URL.
