@@ -17,11 +17,13 @@ function compareKeys(a, b) {
 }
 
 function replaceBackticksWithCodeTags(str) {
-  let count = 0;
-  return str.replace(/`/g, (match) => {
-    count++;
-    return count % 2 === 1 ? "<code>" : "</code>";
-  });
+  // Split on backtick pairs, escape HTML in text segments, and wrap code segments.
+  const parts = str.split("`");
+  return parts.map((part, i) => {
+    const escaped = Utils.escapeHtml(part);
+    // Odd-indexed parts are inside backtick pairs.
+    return i % 2 === 1 ? `<code>${escaped}</code>` : escaped;
+  }).join("");
 }
 
 async function populatePage() {
