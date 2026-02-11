@@ -1483,8 +1483,8 @@ const LocalHints = {
     } else if (element.hasAttribute("title")) {
       linkText = element.getAttribute("title");
     } else {
-      // Strip HTML tags to extract display text without triggering DOM parsing side effects.
-      linkText = element.innerHTML.replace(/<[^>]*>/g, "").slice(0, 256);
+      // Strip HTML tags to extract display text. Slice first to bound CPU cost on large HTML.
+      linkText = element.innerHTML.slice(0, 256).replace(/<[^>]*>/g, "");
     }
 
     return { linkText: linkText.trim(), showLinkText };
