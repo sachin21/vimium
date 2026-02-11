@@ -21,12 +21,14 @@ export async function openUrlInCurrentTab(request) {
       func: (text) => {
         const prefix = "javascript:";
         text = text.slice(prefix.length).trim();
-        // TODO(philc): Why do we try to double decode here? Discover and then document it.
+        // Double decode to match Chrome's address bar behavior: when a user copies a URL from the
+        // address bar, Chrome encodes it once. If the original URL was already encoded, the copied URL
+        // is double-encoded. We attempt to decode twice to recover the original script in both cases.
         text = decodeURIComponent(text);
         try {
           text = decodeURIComponent(text);
         } catch {
-          // Swallow
+          // The text was not double-encoded; the first decode was sufficient.
         }
         const el = document.createElement("script");
         el.textContent = text;
@@ -111,7 +113,7 @@ export async function openUrlInNewWindow(request) {
     winConfig.active = request.active;
   }
   // Firefox does not support "about:newtab" in chrome.tabs.create, so omit it.
-  if (tabConfig["url"] === UrlUtils.chromeNewTabUrl) {
+  if (winConfig["url"] === UrlUtils.chromeNewTabUrl) {
     delete winConfig["url"];
   }
   await chrome.windows.create(winConfig);
