@@ -1,5 +1,6 @@
 import "./test_helper.js";
 import "../../lib/settings.js";
+import { patternToRegExp } from "../../background_scripts/exclusions.js";
 
 // ActionPage.generateDefaultPattern is defined inside a module, so we recreate the logic here
 // for testing purposes since the original is not exported.
@@ -49,7 +50,6 @@ context("generateDefaultPattern", () => {
   });
 
   should("generate pattern for file URL with triple slash", () => {
-    // file:///home splits as ["file:", "", ""] so result is "file:///*".
     const result = generateDefaultPattern("file:///home/user/doc.html");
     assert.equal("file:///*", result);
   });
@@ -92,42 +92,68 @@ context("generateDefaultPattern", () => {
   });
 
   should("generate fallback pattern for chrome-extension URL", () => {
-    // "chrome-extension" contains a hyphen, so it doesn't match [a-z]{3,}://.
-    // Falls through to the else branch.
     const result = generateDefaultPattern("chrome-extension://abcdef/options.html");
     assert.equal("chrome-extension://abcdef/options.html*", result);
   });
 });
 
-// ExclusionRegexpCache.get() converts a pattern to a RegExp. The logic is:
-//   new RegExp("^" + pattern.replace(/\*/g, ".*") + "$")
-// We recreate this for testing since it's not exported.
-function patternToRegExp(pattern) {
-  return new RegExp("^" + pattern.replace(/\*/g, ".*") + "$");
-}
-
-context("patternToRegExp (ExclusionRegexpCache logic)", () => {
+context("patternToRegExp (exported from exclusions.js)", () => {
   should("convert wildcard to match any characters", () => {
-    const regex = patternToRegExp("https://example.com/*");
-    assert.isTrue(regex.test("https://example.com/anything"));
-    assert.isTrue(regex.test("https://example.com/"));
+    const matcher = patternToRegExp("https://example.com/*");
+    assert.isTrue("https://example.com/anything".search(matcher) >= 0);
+    assert.isTrue("https://example.com/".search(matcher) >= 0);
   });
 
   should("not match different domain", () => {
-    const regex = patternToRegExp("https://example.com/*");
-    assert.isFalse(regex.test("https://other.com/anything"));
+    const matcher = patternToRegExp("https://example.com/*");
+    assert.isFalse("https://other.com/anything".search(matcher) >= 0);
   });
 
   should("match https? as regex quantifier (zero or one s)", () => {
-    // Unlike the original test expectation, * is the only character replaced.
-    // ? remains as a regex quantifier (zero or one of preceding char).
-    const regex = patternToRegExp("https?://example.com/*");
-    assert.isTrue(regex.test("https://example.com/foo"));
-    assert.isTrue(regex.test("http://example.com/foo"));
+    const matcher = patternToRegExp("https?://example.com/*");
+    assert.isTrue("https://example.com/foo".search(matcher) >= 0);
+    assert.isTrue("http://example.com/foo".search(matcher) >= 0);
   });
 
   should("anchor pattern to start and end", () => {
-    const regex = patternToRegExp("https://example.com/*");
-    assert.isFalse(regex.test("XXXhttps://example.com/page"));
+    const matcher = patternToRegExp("https://example.com/*");
+    assert.isFalse("XXXhttps://example.com/page".search(matcher) >= 0);
+  });
+
+  should("match default Gmail exclusion pattern", () => {
+    const matcher = patternToRegExp("https?://mail.google.com/*");
+    assert.isTrue("https://mail.google.com/mail/u/0".search(matcher) >= 0);
+    assert.isTrue("http://mail.google.com/mail/u/0".search(matcher) >= 0);
+    assert.isFalse("https://calendar.google.com/".search(matcher) >= 0);
+  });
+
+  should("match pattern without wildcards as full regex", () => {
+    const matcher = patternToRegExp("https://example\\.com/exact");
+    assert.isTrue("https://example.com/exact".search(matcher) >= 0);
+    assert.isFalse("https://example.com/exact/more".search(matcher) >= 0);
+  });
+
+  should("handle multiple wildcards", () => {
+    const matcher = patternToRegExp("http*://*/path/*");
+    assert.isTrue("https://example.com/path/to/page".search(matcher) >= 0);
+    assert.isTrue("http://localhost/path/file".search(matcher) >= 0);
+    assert.isFalse("https://example.com/other/page".search(matcher) >= 0);
+  });
+
+  should("handle leading wildcard", () => {
+    const matcher = patternToRegExp("*://example.com/*");
+    assert.isTrue("https://example.com/page".search(matcher) >= 0);
+    assert.isTrue("ftp://example.com/file".search(matcher) >= 0);
+  });
+
+  should("not be vulnerable to ReDoS from many wildcards", () => {
+    // This pattern with many wildcards should complete quickly (not exponential backtracking).
+    const matcher = patternToRegExp("*a*a*a*a*a*b");
+    const start = Date.now();
+    const input = "a".repeat(100);
+    input.search(matcher);
+    const elapsed = Date.now() - start;
+    // Should complete in well under 1 second (no catastrophic backtracking).
+    assert.isTrue(elapsed < 1000);
   });
 });
