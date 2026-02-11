@@ -41,8 +41,10 @@ context("hud page", () => {
         message = event;
       },
     };
+    const secret = "test-secret";
+    await chrome.storage.session.set({ vimiumSecret: secret });
     await UIComponentMessenger.registerPortWithOwnerPage({
-      data: (await chrome.storage.session.get("vimiumSecret")).vimiumSecret,
+      data: secret,
       ports: [stubPort],
     });
     hudPage.handlers.showFindMode();
