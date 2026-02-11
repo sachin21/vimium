@@ -124,7 +124,20 @@ context("VisualMode movements completeness", () => {
   should("have all expected single-character movement keys", () => {
     const movements = VisualMode.prototype.movements;
     const expectedKeys = [
-      "l", "h", "j", "k", "e", "b", "w", ")", "(", "}", "{", "0", "$", "G",
+      "l",
+      "h",
+      "j",
+      "k",
+      "e",
+      "b",
+      "w",
+      ")",
+      "(",
+      "}",
+      "{",
+      "0",
+      "$",
+      "G",
     ];
     for (const key of expectedKeys) {
       assert.isTrue(

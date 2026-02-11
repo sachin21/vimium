@@ -11,14 +11,18 @@ context("Vomnibar", () => {
     lastShowArgs = null;
     lastShowOpts = null;
 
-    stub(globalThis, "UIComponent", class {
-      constructor() {}
-      load() {}
-      show(args, opts) {
-        lastShowArgs = args;
-        lastShowOpts = opts;
-      }
-    });
+    stub(
+      globalThis,
+      "UIComponent",
+      class {
+        constructor() {}
+        load() {}
+        show(args, opts) {
+          lastShowArgs = args;
+          lastShowOpts = opts;
+        }
+      },
+    );
     stub(globalThis, "HelpDialog", { abort: () => helpDialogAborted = true });
     stub(globalThis, "Utils", {
       getCurrentVersion: () => "1.0",
@@ -83,11 +87,17 @@ context("Vomnibar", () => {
 
   should("init creates UIComponent only once", () => {
     let constructCount = 0;
-    stub(globalThis, "UIComponent", class {
-      constructor() { constructCount++; }
-      load() {}
-      show() {}
-    });
+    stub(
+      globalThis,
+      "UIComponent",
+      class {
+        constructor() {
+          constructCount++;
+        }
+        load() {}
+        show() {}
+      },
+    );
     Vomnibar.vomnibarUI = null;
     Vomnibar.activate(0, { options: {} });
     Vomnibar.activate(0, { options: {} });
