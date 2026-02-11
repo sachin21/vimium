@@ -1483,10 +1483,8 @@ const LocalHints = {
     } else if (element.hasAttribute("title")) {
       linkText = element.getAttribute("title");
     } else {
-      // Use textContent extraction from innerHTML to avoid XSS from raw HTML content.
-      const temp = document.createElement("div");
-      temp.innerHTML = element.innerHTML.slice(0, 256);
-      linkText = temp.textContent;
+      // Strip HTML tags to extract display text without triggering DOM parsing side effects.
+      linkText = element.innerHTML.replace(/<[^>]*>/g, "").slice(0, 256);
     }
 
     return { linkText: linkText.trim(), showLinkText };
