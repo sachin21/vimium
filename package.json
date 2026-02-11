@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "node build_scripts/build_crx.mjs"
+  },
+  "devDependencies": {
+    "json5": "^2.2.3"
+  }
+}
