@@ -11,6 +11,11 @@ export async function registerPortWithOwnerPage(event) {
   // fetched from session storage, so if it matches, then we know that event.ports came from the
   // Vimium extension.
   const secret = (await chrome.storage.session.get("vimiumSecret")).vimiumSecret;
+  // Fail-closed: reject if the secret is not yet initialized to prevent TOCTOU bypass.
+  if (secret == null || typeof secret !== "string" || secret.length === 0) {
+    Utils.debugLog("ui_component_messenger.js: vimiumSecret is not yet initialized.");
+    return;
+  }
   if (event.data !== secret) {
     Utils.debugLog("ui_component_messenger.js: vimiumSecret is incorrect.");
     return;
