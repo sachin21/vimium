@@ -51,6 +51,10 @@ export async function goto(req) {
   const key = getLocationKey(req.markName);
   const items = await chrome.storage.local.get(key);
   const markInfo = items[key];
+  if (markInfo == null) {
+    HUD.show(`Global mark not set '${req.markName}'`, 1000);
+    return;
+  }
   if (markInfo.vimiumSecret !== vimiumSecret) {
     // This is a different Vimium instantiation, so markInfo.tabId is definitely out of date.
     Utils.debugLog("marks: vimiumSecret is incorrect.");
