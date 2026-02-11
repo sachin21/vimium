@@ -80,8 +80,10 @@ class UIComponent {
     this.iframeElement.addEventListener("load", () => {
       // Get vimiumSecret so the iframe can determine that our message isn't the page
       // impersonating us.
-      // Outside of tests, target origin starts with chrome-extension://{vimium's-id}
-      const targetOrigin = chrome.runtime.getURL("");
+      // In production, target origin is chrome-extension:// or moz-extension:// (secure).
+      // In test environments, getURL returns a relative path, so fall back to "*".
+      const extensionUrl = chrome.runtime.getURL("");
+      const targetOrigin = /^[a-z]+-extension:\/\//.test(extensionUrl) ? extensionUrl : "*";
       this.iframeElement.contentWindow.postMessage(secret, targetOrigin, [port2]);
       port1.onmessage = (event) => {
         let eventName = null;
