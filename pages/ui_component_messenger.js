@@ -10,7 +10,18 @@ export async function registerPortWithOwnerPage(event) {
   // The Vimium content script that's running on the parent page has access to this vimiumSecret
   // fetched from session storage, so if it matches, then we know that event.ports came from the
   // Vimium extension.
-  const secret = (await chrome.storage.session.get("vimiumSecret")).vimiumSecret;
+  let secret = (await chrome.storage.session.get("vimiumSecret")).vimiumSecret;
+  // If secret is not yet initialized, wait briefly and retry once to handle the race
+  // where the parent posts the handshake before the background script has set the secret.
+  if (secret == null || typeof secret !== "string" || secret.length === 0) {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+    secret = (await chrome.storage.session.get("vimiumSecret")).vimiumSecret;
+  }
+  // Fail-closed: reject if the secret is still not available after retry.
+  if (secret == null || typeof secret !== "string" || secret.length === 0) {
+    Utils.debugLog("ui_component_messenger.js: vimiumSecret is not yet initialized.");
+    return;
+  }
   if (event.data !== secret) {
     Utils.debugLog("ui_component_messenger.js: vimiumSecret is incorrect.");
     return;

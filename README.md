@@ -1,5 +1,9 @@
 # Vimium - The Hacker's Browser
 
+> **Note:** This is a fork of [philc/vimium](https://github.com/philc/vimium) with security
+> improvements. The original project was created by Phil Crosby and Ilya Sukhar. Security
+> improvements by Satoshi Ohmori (@sachin21).
+
 Vimium is a browser extension that provides keyboard-based navigation and control of the web in the
 spirit of the Vim editor.
 
@@ -180,4 +184,7 @@ See [CHANGELOG](CHANGELOG.md) for the major changes in each release.
 
 ## License
 
-Copyright (c) Phil Crosby, Ilya Sukhar. See [MIT-LICENSE.txt](MIT-LICENSE.txt) for details.
+Copyright (c) 2010 Phil Crosby, Ilya Sukhar. Copyright (c) 2025 Satoshi Ohmori (@sachin21) (security
+improvements and modifications).
+
+This project is licensed under the MIT License. See [MIT-LICENSE.txt](MIT-LICENSE.txt) for details.

@@ -1060,7 +1060,7 @@ class FilterHints {
 const spanWrap = (hintString) => {
   const innerHTML = [];
   for (const char of hintString) {
-    innerHTML.push("<span class='vimium-reset'>" + char + "</span>");
+    innerHTML.push("<span class='vimium-reset'>" + Utils.escapeHtml(char) + "</span>");
   }
   return innerHTML.join("");
 };
@@ -1483,7 +1483,8 @@ const LocalHints = {
     } else if (element.hasAttribute("title")) {
       linkText = element.getAttribute("title");
     } else {
-      linkText = element.innerHTML.slice(0, 256);
+      // Strip HTML tags to extract display text. Slice first to bound CPU cost on large HTML.
+      linkText = element.innerHTML.slice(0, 256).replace(/<[^>]*>/g, "");
     }
 
     return { linkText: linkText.trim(), showLinkText };

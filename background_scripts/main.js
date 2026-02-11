@@ -747,7 +747,7 @@ Utils.addChromeRuntimeOnMessageListener(
     Utils.debugLog(
       "main.js: onMessage:%ourl:%otab:%oframe:%o",
       request.handler,
-      sender.url.replace(/https?:\/\//, ""),
+      sender.url?.replace(/https?:\/\//, "").replace(/[?#].*/, ""),
       sender.tab?.id,
       sender.frameId,
       // request // Often useful for debugging.

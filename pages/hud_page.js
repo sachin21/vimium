@@ -220,11 +220,14 @@ function init() {
   document.addEventListener("keypress", onKeyEvent);
 
   UIComponentMessenger.init();
+  const validHandlerNames = Object.keys(handlers);
   UIComponentMessenger.registerHandler(async function (event) {
     await Utils.populateBrowserInfo();
-    const handler = handlers[event.data.name];
-    Utils.assert(handler != null, "Unrecognized message type.", event.data);
-    return handler(event.data);
+    if (!validHandlerNames.includes(event.data.name)) {
+      console.error("Unrecognized HUD message type:", event.data.name);
+      return;
+    }
+    return handlers[event.data.name](event.data);
   });
 
   FindModeHistory.init();

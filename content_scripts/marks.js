@@ -116,7 +116,20 @@ const Marks = {
                 : localStorage[this.getLocationKey(keyChar)];
               if (markString != null) {
                 this.setPreviousPosition();
-                const position = JSON.parse(markString);
+                let position;
+                try {
+                  position = JSON.parse(markString);
+                } catch {
+                  this.showMessage("Invalid local mark data for", keyChar);
+                  return;
+                }
+                if (
+                  typeof position !== "object" || position == null ||
+                  typeof position.scrollX !== "number" || typeof position.scrollY !== "number"
+                ) {
+                  this.showMessage("Invalid local mark data for", keyChar);
+                  return;
+                }
                 if (position.hash && (position.scrollX === 0) && (position.scrollY === 0)) {
                   globalThis.location.hash = position.hash;
                 } else {

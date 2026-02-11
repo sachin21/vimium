@@ -343,6 +343,40 @@ const OptionsPage = {
           return;
         }
 
+        // Validate the backup is a plain object and only contains known settings keys.
+        if (typeof backup !== "object" || backup == null || Array.isArray(backup)) {
+          alert("Invalid backup format: expected a JSON object.");
+          return;
+        }
+        const validKeys = new Set([...Object.keys(Settings.defaultOptions), "settingsVersion"]);
+        const unknownKeys = Object.keys(backup).filter((key) => !validKeys.has(key));
+        if (unknownKeys.length > 0) {
+          const proceed = confirm(
+            `Backup contains unknown keys: ${
+              unknownKeys.join(", ")
+            }. These will be ignored. Continue?`,
+          );
+          if (!proceed) return;
+          for (const key of unknownKeys) delete backup[key];
+        }
+
+        // Validate that each value matches the expected type from defaults.
+        const typeErrors = [];
+        for (const key of Object.keys(backup)) {
+          if (key === "settingsVersion") continue;
+          const defaultVal = Settings.defaultOptions[key];
+          if (defaultVal == null) continue;
+          const expectedType = Array.isArray(defaultVal) ? "array" : typeof defaultVal;
+          const actualType = Array.isArray(backup[key]) ? "array" : typeof backup[key];
+          if (actualType !== expectedType) {
+            typeErrors.push(`${key}: expected ${expectedType}, got ${actualType}`);
+          }
+        }
+        if (typeErrors.length > 0) {
+          alert("Invalid value types in backup:\n" + typeErrors.join("\n"));
+          return;
+        }
+
         await Settings.setSettings(backup);
         this.setFormFromSettings(Settings.getSettings());
         const saveButton = document.querySelector("#save");

@@ -1,4 +1,3 @@
-import "./all_content_scripts.js";
 import * as completionEngines from "../background_scripts/completion_engines.js";
 
 function cleanUpRegexp(re) {

@@ -1,4 +1,6 @@
-import "./all_content_scripts.js";
+import "../lib/utils.js";
+import "../lib/dom_utils.js";
+import "../lib/settings.js";
 import { allCommands } from "../background_scripts/all_commands.js";
 
 // The ordering we show key bindings is alphanumerical, except that special keys sort to the end.
@@ -15,11 +17,13 @@ function compareKeys(a, b) {
 }
 
 function replaceBackticksWithCodeTags(str) {
-  let count = 0;
-  return str.replace(/`/g, (match) => {
-    count++;
-    return count % 2 === 1 ? "<code>" : "</code>";
-  });
+  // Split on backtick pairs, escape HTML in text segments, and wrap code segments.
+  const parts = str.split("`");
+  return parts.map((part, i) => {
+    const escaped = Utils.escapeHtml(part);
+    // Odd-indexed parts are inside backtick pairs.
+    return i % 2 === 1 ? `<code>${escaped}</code>` : escaped;
+  }).join("");
 }
 
 async function populatePage() {
@@ -62,7 +66,8 @@ async function populatePage() {
         const ul = el.querySelector(".options ul");
         for (const [name, desc] of Object.entries(command.options)) {
           const li = document.createElement("li");
-          li.innerHTML = `<code>${name}</code>: ` + replaceBackticksWithCodeTags(desc);
+          li.innerHTML = `<code>${Utils.escapeHtml(name)}</code>: ` +
+            replaceBackticksWithCodeTags(desc);
           ul.appendChild(li);
         }
       } else {

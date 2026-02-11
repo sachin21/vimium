@@ -1,6 +1,55 @@
 // This module manages manages the exclusion rule setting. An exclusion is an object with two
 // attributes: pattern and passKeys. The exclusion rules are an array of such objects.
 
+// Convert a pattern (with * as glob wildcard) to a matcher object.
+// Regex syntax (e.g. ? for optional char) is preserved within non-wildcard segments.
+// Uses segment-based matching to prevent ReDoS from multiple .* sequences.
+export function patternToRegExp(pattern) {
+  // Collapse consecutive wildcards into one.
+  const collapsed = pattern.replace(/\*{2,}/g, "*");
+  const parts = collapsed.split("*");
+
+  // No wildcards: standard regex match (no .* means no wildcard-driven ReDoS).
+  if (parts.length === 1) {
+    return new RegExp("^" + pattern + "$");
+  }
+
+  // Build individual regexes for each segment between wildcards.
+  // First segment is anchored to start, last to end, middle segments float.
+  // If any segment contains invalid regex, the entire pattern is invalid.
+  let hasError = false;
+  const segments = parts.map((part, i) => {
+    if (!part) return null;
+    try {
+      if (i === 0) return new RegExp("^" + part);
+      if (i === parts.length - 1) return new RegExp(part + "$");
+      return new RegExp(part);
+    } catch {
+      hasError = true;
+      return null;
+    }
+  });
+
+  // If any segment had invalid regex, match nothing (same as original behavior).
+  if (hasError) return /^$/;
+
+  // Return a matcher that implements Symbol.search for String.prototype.search() compat.
+  return {
+    [Symbol.search](url) {
+      let pos = 0;
+      for (let i = 0; i < segments.length; i++) {
+        const seg = segments[i];
+        if (!seg) continue;
+        const remaining = url.slice(pos);
+        const m = remaining.match(seg);
+        if (!m) return -1;
+        pos += m.index + m[0].length;
+      }
+      return 0;
+    },
+  };
+}
+
 const ExclusionRegexpCache = {
   cache: {},
   clear(cache) {
@@ -13,7 +62,7 @@ const ExclusionRegexpCache = {
       let result;
       // We use try/catch to ensure that a broken regexp doesn't wholly cripple Vimium.
       try {
-        result = new RegExp("^" + pattern.replace(/\*/g, ".*") + "$");
+        result = patternToRegExp(pattern);
       } catch {
         if (!globalThis.isUnitTests) {
           console.log(`bad regexp in exclusion rule: ${pattern}`);

@@ -99,7 +99,7 @@ export async function complete(searchUrl, queryTerms) {
   if (query.length < 4) return [];
 
   // We don't complete regular URLs or Javascript URLs.
-  if (queryTerms.length == 1 && await UrlUtils.isUrl(query)) return [];
+  if (queryTerms.length === 1 && await UrlUtils.isUrl(query)) return [];
   if (UrlUtils.hasJavascriptProtocol(query)) return [];
 
   const engine = lookupEngine(searchUrl);
@@ -126,7 +126,7 @@ export async function complete(searchUrl, queryTerms) {
   await createTimeoutPromise(DELAY);
 
   // If the user has issued a new query while we were waiting, then this query is old; abort it.
-  if (lastRequestId != requestId) return [];
+  if (lastRequestId !== requestId) return [];
 
   const engineWrapper = new EnginePrefixWrapper(searchUrl, engine);
   const url = engineWrapper.getUrl(queryTerms);
@@ -138,7 +138,7 @@ export async function complete(searchUrl, queryTerms) {
   // we fall back to the catch clause, below. Therefore, we "fail safe" in the case of incorrect
   // or out-of-date completion engine implementations.
   let suggestions = [];
-  let isError = responseText == null;
+  let isError = responseText === null;
   if (!isError) {
     try {
       suggestions = engineWrapper.parse(responseText)
