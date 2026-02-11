@@ -360,6 +360,23 @@ const OptionsPage = {
           for (const key of unknownKeys) delete backup[key];
         }
 
+        // Validate that each value matches the expected type from defaults.
+        const typeErrors = [];
+        for (const key of Object.keys(backup)) {
+          if (key === "settingsVersion") continue;
+          const defaultVal = Settings.defaultOptions[key];
+          if (defaultVal == null) continue;
+          const expectedType = Array.isArray(defaultVal) ? "array" : typeof defaultVal;
+          const actualType = Array.isArray(backup[key]) ? "array" : typeof backup[key];
+          if (actualType !== expectedType) {
+            typeErrors.push(`${key}: expected ${expectedType}, got ${actualType}`);
+          }
+        }
+        if (typeErrors.length > 0) {
+          alert("Invalid value types in backup:\n" + typeErrors.join("\n"));
+          return;
+        }
+
         await Settings.setSettings(backup);
         this.setFormFromSettings(Settings.getSettings());
         const saveButton = document.querySelector("#save");
